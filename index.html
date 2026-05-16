@@ -71,8 +71,9 @@ window.$fb = {
 };
 
 // Global state
-window.MY_LIST = {};
+window.MY_LIST = { manga: {}, anime: {} };
 window.NSFW = localStorage.getItem('nsfw')==='1';
+window.ANIME_PLAYER_STATE = {};
 
 // Enhanced notification system
 window.showToast = function(msg, type='info', duration=3000) {
@@ -94,10 +95,6 @@ window.switchContentType = function(type) {
   localStorage.setItem('contentType', type);
   document.querySelectorAll('.ct-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.type === type);
-  });
-  // Update pages visibility
-  document.querySelectorAll('[data-content-type]').forEach(el => {
-    el.style.display = el.dataset.contentType === type ? 'block' : 'none';
   });
 };
 
@@ -286,7 +283,6 @@ button{cursor:pointer;font-family:var(--font-ar)}
 .sb-sec{font-size:10px;font-weight:700;color:var(--muted);
         padding:8px 16px 4px;text-transform:uppercase;letter-spacing:.8px}
 
-/* Sidebar search */
 .sb-search{padding:8px 12px}
 .sb-search input{
   width:100%;padding:10px 14px;background:var(--inp);
@@ -319,6 +315,124 @@ button{cursor:pointer;font-family:var(--font-ar)}
 }
 
 .pg{display:none;min-height:100vh}.pg.on{display:block}
+
+/* ═══ ANIME PLAYER ═══════════════════════════════════════ */
+.anime-player-container{
+  background:#000;min-height:100vh;display:flex;flex-direction:column;
+}
+.video-player{
+  width:100%;aspect-ratio:16/9;background:#000;position:relative;
+  display:flex;align-items:center;justify-content:center;
+}
+.video-player video{
+  width:100%;height:100%;object-fit:contain;
+}
+.player-controls{
+  position:absolute;bottom:0;left:0;right:0;
+  background:linear-gradient(to top,rgba(0,0,0,.9),transparent);
+  padding:30px 16px 16px;opacity:0;transition:opacity .3s;
+}
+.video-player:hover .player-controls{opacity:1}
+.player-bar{
+  width:100%;height:4px;background:rgba(255,255,255,.2);
+  border-radius:2px;margin-bottom:12px;cursor:pointer;
+}
+.player-progress{
+  height:100%;background:var(--accent-grad);border-radius:2px;width:0%;
+  transition:width .1s linear;
+}
+.player-buttons{
+  display:flex;align-items:center;justify-content:space-between;
+  color:#fff;font-size:12px;
+}
+.player-btn{
+  background:none;border:none;color:#fff;font-size:20px;
+  cursor:pointer;transition:all .3s;padding:4px 8px;
+}
+.player-btn:hover{transform:scale(1.2)}
+
+.episode-info{
+  background:var(--s1);border-top:1px solid var(--brd);
+  padding:20px 24px;
+}
+.ep-title{
+  font-size:18px;font-weight:700;margin-bottom:8px;
+}
+.ep-meta{
+  display:flex;gap:16px;font-size:12px;color:var(--muted);margin-bottom:16px;
+  flex-wrap:wrap;
+}
+.ep-desc{
+  color:var(--dim);font-size:13px;line-height:1.8;margin-bottom:16px;
+}
+
+/* ═══ EPISODES/SEASONS PANEL ═════════════════════════════ */
+.episodes-panel{
+  display:grid;grid-template-columns:240px 1fr;gap:16px;padding:20px;
+  background:var(--bg);
+}
+
+.seasons-list{
+  background:var(--s2);border:1px solid var(--brd);
+  border-radius:var(--r-lg);padding:12px;height:fit-content;
+  position:sticky;top:20px;max-height:calc(100vh - 40px);overflow-y:auto;
+}
+.seasons-title{
+  font-size:12px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;padding:8px 12px;margin-bottom:8px;
+}
+.season-btn{
+  width:100%;padding:10px 12px;border:1px solid var(--brd);
+  background:var(--s1);color:var(--dim);font-size:12px;font-weight:600;
+  border-radius:8px;margin-bottom:6px;cursor:pointer;
+  transition:all var(--t);text-align:right;
+}
+.season-btn:hover{border-color:var(--red);color:var(--txt);background:var(--s2)}
+.season-btn.active{
+  background:var(--accent-grad);border-color:var(--accent-grad);
+  color:#fff;box-shadow:0 0 10px var(--glow);
+}
+
+.episodes-list{
+  background:var(--s2);border:1px solid var(--brd);
+  border-radius:var(--r-lg);overflow:hidden;
+}
+.episodes-header{
+  padding:12px 16px;border-bottom:1px solid var(--brd);
+  font-size:13px;font-weight:700;display:flex;align-items:center;
+  justify-content:space-between;
+}
+.episodes-scroll{
+  max-height:calc(100vh - 200px);overflow-y:auto;
+}
+.episode-item{
+  padding:12px 16px;border-bottom:1px solid var(--brd);
+  display:flex;gap:12px;cursor:pointer;transition:all var(--t);
+}
+.episode-item:last-child{border-bottom:none}
+.episode-item:hover{background:var(--s1);border-left:3px solid var(--red)}
+.episode-item.active{
+  background:linear-gradient(to right,rgba(139,92,246,.15),transparent);
+  border-left:3px solid var(--red);
+}
+.ep-thumb{
+  width:60px;height:36px;border-radius:6px;background:var(--s3);
+  overflow:hidden;flex-shrink:0;
+}
+.ep-thumb img{width:100%;height:100%;object-fit:cover}
+.ep-details{
+  flex:1;display:flex;flex-direction:column;justify-content:center;min-width:0;
+}
+.ep-num{font-size:12px;font-weight:700;color:var(--gold)}
+.ep-name{font-size:13px;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ep-watch{
+  width:24px;height:24px;border-radius:50%;border:2px solid var(--brd);
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:var(--muted);
+}
+.ep-watch.watched{
+  background:var(--green);border-color:var(--green);color:#fff;
+}
 
 /* ═══ HERO SECTION ═══════════════════════════════════════ */
 .hero{
@@ -403,12 +517,11 @@ button{cursor:pointer;font-family:var(--font-ar)}
 .ce{font-size:10px;color:var(--muted)}
 .cr2{font-size:11px;font-weight:700;color:var(--gold)}
 
-/* Content badge */
 .content-badge{
   position:absolute;bottom:10px;left:10px;padding:3px 8px;
   border-radius:6px;font-size:9px;font-weight:700;z-index:2;
-  background:rgba(179,157,219,.15);border:1px solid rgba(179,157,219,.3);
-  color:var(--cyan);
+  background:rgba(253, 73, 73, 0.15);border:1px solid rgba(253, 73, 73, 0.3);
+  color:#ff6b9d;
 }
 
 .empty{text-align:center;padding:48px 16px;color:var(--muted);grid-column:1/-1}
@@ -452,6 +565,21 @@ button{cursor:pointer;font-family:var(--font-ar)}
   .hero{padding:30px 20px;min-height:80vh}
   .grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
   .st{font-size:18px}
+  
+  .episodes-panel{
+    grid-template-columns:1fr;
+  }
+  .seasons-list{
+    display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;
+    position:static;max-height:none;min-width:0;
+    padding:0;background:transparent;border:none;
+  }
+  .season-btn{
+    margin-bottom:0;white-space:nowrap;flex-shrink:0;
+  }
+  .episodes-scroll{
+    max-height:none;
+  }
 }
 
 @media(max-width:480px){
@@ -460,6 +588,14 @@ button{cursor:pointer;font-family:var(--font-ar)}
   .hero p{font-size:14px}
   .grid{grid-template-columns:repeat(2,1fr)}
   .btn-r,.btn-g{padding:11px 20px;font-size:13px}
+  
+  .episode-item{
+    padding:10px;gap:8px;
+  }
+  .ep-thumb{
+    width:50px;height:30px;
+  }
+  .ep-num,.ep-name{font-size:11px}
 }
 </style>
 
@@ -527,42 +663,69 @@ button{cursor:pointer;font-family:var(--font-ar)}
 <!-- MAIN CONTENT ============================================ -->
 <div class="main">
   
-  <!-- HOME PAGE -->
-  <div class="pg on" id="home" data-content-type="manga">
-    <div class="hero">
-      <div class="hero-bg"></div>
-      <div class="hero-body">
-        <div class="pill">✨ أحدث الإصدارات</div>
-        <h1>اكتشف أفضل <em>مانجا</em></h1>
-        <p>منصة عربية متكاملة لقراءة أفضل المانجا مع مجتمع نشط وتقييمات حقيقية</p>
-        <div class="hero-btns">
-          <button class="btn-r" onclick="showPage('explore')">ابدأ الاستكشاف</button>
-          <button class="btn-g" onclick="showPage('my-list')">مكتبتي</button>
-        </div>
-        <div class="nums">
-          <div>
-            <div class="nv"><b>5000+</b></div>
-            <div class="nl">مانجا</div>
+  <!-- ANIME PLAYER PAGE -->
+  <div class="pg" id="anime-player" data-content-type="anime">
+    <div class="anime-player-container">
+      <!-- Video Player -->
+      <div class="video-player" id="video-player">
+        <video id="main-video" controls>
+          <source src="" type="video/mp4">
+          متصفحك لا يدعم تشغيل الفيديو
+        </video>
+        <div class="player-controls">
+          <div class="player-bar">
+            <div class="player-progress" id="player-progress"></div>
           </div>
-          <div>
-            <div class="nv"><b>50K+</b></div>
-            <div class="nl">مستخدم نشط</div>
+          <div class="player-buttons">
+            <div style="display:flex;gap:8px">
+              <button class="player-btn" onclick="togglePlay()" title="تشغيل/إيقاف">▶️</button>
+              <button class="player-btn" onclick="toggleMute()" title="كتم الصوت">🔊</button>
+              <span id="time-display" style="font-size:12px;color:#fff">0:00 / 0:00</span>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="player-btn" onclick="toggleSubtitles()" title="الترجمات">📝</button>
+              <button class="player-btn" onclick="toggleFullscreen()" title="ملء الشاشة">⛶</button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="sec">
-      <div class="sh">
-        <div class="st">🔥 الأكثر شيوعاً</div>
+      <!-- Episode Info -->
+      <div class="episode-info">
+        <div class="ep-title" id="ep-title">الموسم 1 الحلقة 1</div>
+        <div class="ep-meta">
+          <span>⭐ <span id="ep-rating">8.5</span>/10</span>
+          <span>👁️ <span id="ep-views">12.5K</span> مشاهدة</span>
+          <span>📅 <span id="ep-date">2024-01-15</span></span>
+        </div>
+        <div class="ep-desc" id="ep-description">وصف الحلقة سيظهر هنا...</div>
       </div>
-      <div class="grid" id="trending-manga">
-        <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">جاري التحميل...</div>
+
+      <!-- Episodes & Seasons Panel -->
+      <div class="episodes-panel">
+        <!-- Seasons List (Sticky) -->
+        <div class="seasons-list" id="seasons-list">
+          <div class="seasons-title">الفصول</div>
+          <!-- Seasons will be populated here -->
+        </div>
+
+        <!-- Episodes List -->
+        <div>
+          <div class="episodes-list">
+            <div class="episodes-header">
+              <div>الحلقات</div>
+              <div id="ep-count">0 حلقة</div>
+            </div>
+            <div class="episodes-scroll" id="episodes-list">
+              <!-- Episodes will be populated here -->
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- ANIME HOME PAGE -->
+  <!-- HOME PAGE (ANIME) -->
   <div class="pg" id="home-anime" data-content-type="anime">
     <div class="hero">
       <div class="hero-bg"></div>
@@ -597,6 +760,41 @@ button{cursor:pointer;font-family:var(--font-ar)}
     </div>
   </div>
 
+  <!-- HOME PAGE (MANGA) -->
+  <div class="pg on" id="home" data-content-type="manga">
+    <div class="hero">
+      <div class="hero-bg"></div>
+      <div class="hero-body">
+        <div class="pill">✨ أحدث الإصدارات</div>
+        <h1>اكتشف أفضل <em>مانجا</em></h1>
+        <p>منصة عربية متكاملة لقراءة أفضل المانجا مع مجتمع نشط وتقييمات حقيقية</p>
+        <div class="hero-btns">
+          <button class="btn-r" onclick="showPage('explore')">ابدأ الاستكشاف</button>
+          <button class="btn-g" onclick="showPage('my-list')">مكتبتي</button>
+        </div>
+        <div class="nums">
+          <div>
+            <div class="nv"><b>5000+</b></div>
+            <div class="nl">مانجا</div>
+          </div>
+          <div>
+            <div class="nv"><b>50K+</b></div>
+            <div class="nl">مستخدم نشط</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sh">
+        <div class="st">🔥 الأكثر شيوعاً</div>
+      </div>
+      <div class="grid" id="trending-manga">
+        <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">جاري التحميل...</div>
+      </div>
+    </div>
+  </div>
+
   <!-- MY LIST PAGE -->
   <div class="pg" id="my-list">
     <div class="sec">
@@ -617,7 +815,7 @@ button{cursor:pointer;font-family:var(--font-ar)}
         <div style="background:var(--s2);border:1px solid var(--brd);border-radius:var(--r-lg);padding:20px;margin-bottom:20px">
           <h3 style="font-size:14px;font-weight:700;margin-bottom:12px">المظهر</h3>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-            <button class="theme-opt" data-theme="dark" onclick="setTheme('dark)" style="padding:12px;border:2px solid var(--brd);border-radius:var(--r);background:var(--s1);color:var(--txt);cursor:pointer;transition:all var(--t)">🌙 مظلم</button>
+            <button class="theme-opt" data-theme="dark" onclick="setTheme('dark')" style="padding:12px;border:2px solid var(--brd);border-radius:var(--r);background:var(--s1);color:var(--txt);cursor:pointer;transition:all var(--t)">🌙 مظلم</button>
             <button class="theme-opt" data-theme="amoled" onclick="setTheme('amoled')" style="padding:12px;border:2px solid var(--brd);border-radius:var(--r);background:var(--s1);color:var(--txt);cursor:pointer;transition:all var(--t)">⚫ أموليد</button>
             <button class="theme-opt" data-theme="light" onclick="setTheme('light')" style="padding:12px;border:2px solid var(--brd);border-radius:var(--r);background:var(--s1);color:var(--txt);cursor:pointer;transition:all var(--t)">☀️ فاتح</button>
           </div>
@@ -633,38 +831,48 @@ button{cursor:pointer;font-family:var(--font-ar)}
             <input type="checkbox" id="nsfw-toggle" style="width:40px;height:24px;cursor:pointer">
           </div>
         </div>
+
+        <!-- Quality Settings -->
+        <div style="background:var(--s2);border:1px solid var(--brd);border-radius:var(--r-lg);padding:20px;margin-bottom:20px">
+          <h3 style="font-size:14px;font-weight:700;margin-bottom:12px">جودة الفيديو</h3>
+          <select id="video-quality" style="width:100%;padding:10px;background:var(--inp);border:1px solid var(--brd);border-radius:10px;color:var(--txt);font-family:var(--font-ar);outline:none;cursor:pointer">
+            <option value="auto">تلقائي</option>
+            <option value="480p">480p</option>
+            <option value="720p">720p</option>
+            <option value="1080p">1080p</option>
+            <option value="4k">4K</option>
+          </select>
+        </div>
+
+        <!-- Subtitle Settings -->
+        <div style="background:var(--s2);border:1px solid var(--brd);border-radius:var(--r-lg);padding:20px">
+          <h3 style="font-size:14px;font-weight:700;margin-bottom:12px">الترجمات</h3>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="radio" name="subtitle-lang" value="ar" checked> عربي
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="radio" name="subtitle-lang" value="en"> إنجليزي
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="radio" name="subtitle-lang" value="none"> بدون ترجمات
+            </label>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
 </div>
 
-<!-- AUTH MODAL -->
-<div class="mo" id="auth-modal">
-  <div class="mb">
-    <h2 style="font-size:18px;font-weight:700;margin-bottom:16px;text-align:center">تسجيل الدخول</h2>
-    <div style="display:flex;gap:8px;margin-bottom:16px;background:var(--s1);border:1px solid var(--brd);border-radius:8px;padding:3px">
-      <button class="mt3 on" onclick="switchAuthMode('login')" style="flex:1;padding:6px;border:none;background:transparent;color:var(--txt);font-size:13px;font-weight:600;border-radius:6px;cursor:pointer;transition:all var(--t)">دخول</button>
-      <button class="mt3" onclick="switchAuthMode('signup')" style="flex:1;padding:6px;border:none;background:transparent;color:var(--muted);font-size:13px;font-weight:600;border-radius:6px;cursor:pointer;transition:all var(--t)">إنشاء حساب</button>
-    </div>
-    <form id="auth-form" onsubmit="handleAuth(event)" style="display:flex;flex-direction:column;gap:12px">
-      <input type="email" id="auth-email" placeholder="البريد الإلكتروني" required style="padding:10px;background:var(--inp);border:1px solid var(--brd);border-radius:10px;color:var(--txt);font-family:var(--font-ar);font-size:13px;outline:none;transition:all var(--t)">
-      <input type="password" id="auth-password" placeholder="كلمة المرور" required style="padding:10px;background:var(--inp);border:1px solid var(--brd);border-radius:10px;color:var(--txt);font-family:var(--font-ar);font-size:13px;outline:none;transition:all var(--t)">
-      <button type="submit" style="padding:10px;background:var(--accent-grad);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:700;cursor:pointer;transition:all var(--t)">دخول</button>
-    </form>
-    <button onclick="closeAuthModal()" style="position:absolute;top:11px;left:11px;width:26px;height:26px;border-radius:6px;background:var(--s1);border:1px solid var(--brd);color:var(--dim);font-size:13px;cursor:pointer;transition:all var(--t)">✕</button>
-  </div>
-</div>
-
 <script>
-// Page navigation
+// ═══ PAGE NAVIGATION ══════════════════════════════════════
 window.showPage = function(pageName) {
   document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
   
   const contentType = window.CONTENT_TYPE;
   let pageId = pageName;
   
-  // Handle content type specific pages
   if(pageName === 'home') {
     pageId = contentType === 'anime' ? 'home-anime' : 'home';
   }
@@ -672,11 +880,10 @@ window.showPage = function(pageName) {
   const page = document.getElementById(pageId);
   if(page) page.classList.add('on');
   
-  // Update nav highlight
   document.querySelectorAll('.sb-item').forEach(item => item.classList.remove('on'));
 };
 
-// Theme management
+// ═══ THEME MANAGEMENT ═════════════════════════════════════
 window.setTheme = function(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('theme', theme);
@@ -686,41 +893,231 @@ window.setTheme = function(theme) {
   window.showToast(`تم تغيير المظهر إلى ${theme}`, 'success');
 };
 
-// Auth
-window.handleAuth = function(e) {
-  e.preventDefault();
-  const email = document.getElementById('auth-email').value;
-  const password = document.getElementById('auth-password').value;
-  
-  if(!email || !password) {
-    window.showToast('الرجاء إدخال جميع البيانات', 'error');
+// ═══ ANIME PLAYER FUNCTIONS ═══════════════════════════════
+window.CURRENT_ANIME = null;
+window.CURRENT_SEASON = 1;
+window.CURRENT_EPISODE = 1;
+
+// Mock data - يمكن استبداله بـ Firebase
+window.ANIME_DATA = {
+  'demon-slayer': {
+    title: 'Demon Slayer',
+    titleAr: 'قاتل الشياطين',
+    seasons: {
+      1: {
+        name: 'الموسم 1',
+        episodes: [
+          {
+            num: 1,
+            title: 'ولادة قاتل الشياطين',
+            titleAr: 'الحلقة الأولى',
+            thumbnail: 'https://placehold.co/60x36/6c3ce0/ffffff?text=EP1',
+            description: 'يبدأ تانجيرو رحلته ليصبح قاتل شياطين...',
+            duration: '24:30',
+            rating: 8.9,
+            views: 125000,
+            date: '2019-04-06',
+            videoUrl: 'https://example.com/ep1.mp4',
+            watched: false
+          },
+          {
+            num: 2,
+            title: 'جندي شامل',
+            titleAr: 'الحلقة الثانية',
+            thumbnail: 'https://placehold.co/60x36/6c3ce0/ffffff?text=EP2',
+            description: 'تدريب صعب مع سيد الماء...',
+            duration: '24:15',
+            rating: 8.7,
+            views: 98000,
+            date: '2019-04-13',
+            videoUrl: 'https://example.com/ep2.mp4',
+            watched: true
+          }
+        ]
+      },
+      2: {
+        name: 'الموسم 2',
+        episodes: [
+          {
+            num: 1,
+            title: 'حقبة جديدة',
+            titleAr: 'الحلقة الأولى من الموسم الثاني',
+            thumbnail: 'https://placehold.co/60x36/6c3ce0/ffffff?text=S2EP1',
+            description: 'بدء الموسم الثاني من المغامرة...',
+            duration: '24:45',
+            rating: 9.2,
+            views: 156000,
+            date: '2021-12-05',
+            videoUrl: 'https://example.com/s2ep1.mp4',
+            watched: false
+          }
+        ]
+      }
+    }
+  }
+};
+
+window.loadAnimePlayer = function(animeId, season, episode) {
+  const anime = window.ANIME_DATA[animeId];
+  if(!anime) {
+    window.showToast('الأنمي غير موجود', 'error');
     return;
   }
+
+  window.CURRENT_ANIME = animeId;
+  window.CURRENT_SEASON = season;
+  window.CURRENT_EPISODE = episode;
+
+  const seasonData = anime.seasons[season];
+  const episodeData = seasonData.episodes[episode - 1];
+
+  // Update video source
+  document.getElementById('main-video').src = episodeData.videoUrl;
+
+  // Update episode info
+  document.getElementById('ep-title').textContent = `${anime.titleAr} - الموسم ${season} الحلقة ${episode}`;
+  document.getElementById('ep-description').textContent = episodeData.description;
+  document.getElementById('ep-rating').textContent = episodeData.rating;
+  document.getElementById('ep-views').textContent = (episodeData.views / 1000).toFixed(1) + 'K';
+  document.getElementById('ep-date').textContent = episodeData.date;
+
+  // Load seasons
+  loadSeasons(anime);
   
-  window.showToast('جاري تسجيل الدخول...', 'info');
-  // Firebase logic will go here
+  // Load episodes for current season
+  loadEpisodes(anime, season);
+
+  // Save watch progress
+  saveWatchProgress(animeId, season, episode);
+
+  // Show player page
+  window.showPage('anime-player');
 };
 
-window.closeAuthModal = function() {
-  document.getElementById('auth-modal').classList.remove('open');
+window.loadSeasons = function(anime) {
+  const seasonsList = document.getElementById('seasons-list');
+  const container = seasonsList.querySelector('div') || seasonsList;
+  
+  const html = Object.keys(anime.seasons).map(seasonNum => `
+    <button class="season-btn ${seasonNum == window.CURRENT_SEASON ? 'active' : ''}" 
+            onclick="loadEpisodes(window.ANIME_DATA['${window.CURRENT_ANIME}'], ${seasonNum})">
+      الموسم ${seasonNum}
+    </button>
+  `).join('');
+
+  if(seasonsList.innerHTML.includes('الفصول')) {
+    seasonsList.innerHTML = '<div class="seasons-title">الفصول</div>' + html;
+  }
 };
 
-window.switchAuthMode = function(mode) {
-  document.querySelectorAll('.mt3').forEach(btn => btn.classList.remove('on'));
-  event.target.classList.add('on');
+window.loadEpisodes = function(anime, season) {
+  window.CURRENT_SEASON = season;
+  const seasonData = anime.seasons[season];
+  const episodesList = document.getElementById('episodes-list');
+  
+  const html = seasonData.episodes.map((ep, idx) => `
+    <div class="episode-item ${ep.num == window.CURRENT_EPISODE ? 'active' : ''}"
+         onclick="loadAnimePlayer('${window.CURRENT_ANIME}', ${season}, ${ep.num})">
+      <div class="ep-thumb">
+        <img src="${ep.thumbnail}" alt="الحلقة ${ep.num}">
+      </div>
+      <div class="ep-details">
+        <div class="ep-num">الحلقة ${ep.num}</div>
+        <div class="ep-name">${ep.title}</div>
+      </div>
+      <div class="ep-watch ${ep.watched ? 'watched' : ''}" title="${ep.watched ? 'مشاهد' : 'لم تشاهد'}">
+        ${ep.watched ? '✓' : ''}
+      </div>
+    </div>
+  `).join('');
+
+  episodesList.innerHTML = html;
+  document.getElementById('ep-count').textContent = `${seasonData.episodes.length} حلقة`;
+
+  // Update active season button
+  document.querySelectorAll('.season-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.includes(`الموسم ${season}`));
+  });
 };
 
-// Initialize theme selector
+window.saveWatchProgress = function(animeId, season, episode) {
+  if(!window.ME) return;
+  
+  const progress = {
+    season,
+    episode,
+    lastWatched: new Date().toISOString(),
+    status: 'watching'
+  };
+
+  // Save to localStorage for now
+  localStorage.setItem(`anime-progress-${animeId}`, JSON.stringify(progress));
+};
+
+// ═══ PLAYER CONTROLS ══════════════════════════════════════
+const video = document.getElementById('main-video');
+
+window.togglePlay = function() {
+  if(video.paused) video.play();
+  else video.pause();
+};
+
+window.toggleMute = function() {
+  video.muted = !video.muted;
+};
+
+window.toggleSubtitles = function() {
+  window.showToast('الترجمات: قريباً', 'info');
+};
+
+window.toggleFullscreen = function() {
+  if(!document.fullscreenElement) {
+    document.getElementById('video-player').requestFullscreen().catch(err => {
+      window.showToast('لا يمكن الدخول لملء الشاشة', 'error');
+    });
+  } else {
+    document.exitFullscreen();
+  }
+};
+
+// Update time display
+video.addEventListener('timeupdate', () => {
+  const current = formatTime(video.currentTime);
+  const duration = formatTime(video.duration);
+  document.getElementById('time-display').textContent = `${current} / ${duration}`;
+  
+  const progress = (video.currentTime / video.duration) * 100;
+  document.getElementById('player-progress').style.width = progress + '%';
+});
+
+function formatTime(seconds) {
+  if(!seconds || isNaN(seconds)) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+// Progress bar click
+document.querySelector('.player-bar').addEventListener('click', (e) => {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const percent = (e.clientX - rect.left) / rect.width;
+  video.currentTime = percent * video.duration;
+});
+
+// ═══ THEME & SETTINGS ═════════════════════════════════════
 document.querySelectorAll('.theme-opt').forEach(btn => {
   if(btn.dataset.theme === (localStorage.getItem('theme') || 'dark')) {
     btn.style.borderColor = 'var(--red)';
   }
 });
 
-// Initialize page
+// ═══ INITIALIZATION ═══════════════════════════════════════
 window.addEventListener('load', function() {
   window.showPage('home');
   window.switchContentType(window.CONTENT_TYPE || 'manga');
+  
+  // Demo: Load anime player with sample data
+  // window.loadAnimePlayer('demon-slayer', 1, 1);
 });
 </script>
 
